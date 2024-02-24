@@ -5,41 +5,25 @@ CREATE DATABASE library;
 
 \c library
 
-CREATE TABLE IF NOT EXISTS book
+CREATE TABLE IF NOT EXISTS users
 (
-    id   SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS book_genres
-(
-    book_id SERIAL,
-    genre   VARCHAR(255),
-    PRIMARY KEY (book_id, genre),
-    FOREIGN KEY (book_id) REFERENCES book (id)
-);
-
-CREATE TABLE IF NOT EXISTS book_authors
-(
-    book_id SERIAL,
-    author  VARCHAR(255),
-    PRIMARY KEY (book_id, author),
-    FOREIGN KEY (book_id) REFERENCES book (id)
-);
-
-CREATE TABLE IF NOT EXISTS book_user
-(
-    id       SERIAL PRIMARY KEY,
+    user_id  SERIAL PRIMARY KEY,
     email    VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role     VARCHAR(255) NOT NULL
+    role     VARCHAR(25),
+    UNIQUE (email, password)
 );
 
-CREATE TABLE IF NOT EXISTS user_favorite_books
+CREATE TABLE IF NOT EXISTS books
 (
-    user_id SERIAL,
-    book_id SERIAL,
-    PRIMARY KEY (user_id, book_id),
-    FOREIGN KEY (user_id) REFERENCES book_user (id),
-    FOREIGN KEY (book_id) REFERENCES book (id)
+    id    SERIAL PRIMARY KEY,
+    name  VARCHAR(255) NOT NULL,
+    genre VARCHAR(255) NOT NULL
 );
+
+INSERT INTO books (name, genre)
+VALUES ('The Hobbit', 'FANTASY'),
+       ('Dune', 'SCIENCE_FICTION'),
+       ('Pride and Prejudice', 'ROMANCE'),
+       ('The Da Vinci Code', 'MYSTERY'),
+       ('The Shining', 'HORROR');

@@ -1,4 +1,4 @@
-package com.example.library.dto.enums;
+package com.example.library.entity.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,4 +19,3 @@ public enum Genre {
 
     private final String displayName;
 }
-

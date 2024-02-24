@@ -1,6 +1,6 @@
 package com.example.library.service;
 
-import com.example.library.dto.Book;
+import com.example.library.entity.Book;
 import com.example.library.repository.BookRepository;
 import lombok.NonNull;
 import org.springframework.stereotype.Service;
