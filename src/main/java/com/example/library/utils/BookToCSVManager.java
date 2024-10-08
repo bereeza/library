@@ -1,7 +1,6 @@
 package com.example.library.utils;
 
 import com.example.library.entity.Book;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.servlet.http.HttpServletResponse;
@@ -12,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 public final class BookToCSVManager {
     private final static String TYPE = "text/csv";
+
     public static void save(List<Book> data, HttpServletResponse response) {
         response.setContentType(TYPE);
         response.setHeader("Content-Disposition", "attachment; filename=books.csv");

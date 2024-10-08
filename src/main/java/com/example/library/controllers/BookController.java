@@ -1,57 +1,37 @@
 package com.example.library.controllers;
 
-import com.example.library.entity.Book;
+import com.example.library.dto.Response;
+import com.example.library.dto.book.BookInfoDto;
+import com.example.library.dto.book.BookSaveDto;
 import com.example.library.service.BookService;
-import com.example.library.utils.BookToCSVManager;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Optional;
-
 @RestController
-@RequestMapping("/books")
+@RequestMapping("/api/v1/books")
+@RequiredArgsConstructor
 public class BookController {
+
     private final BookService bookService;
 
-    public BookController(BookService bookService) {
-        this.bookService = bookService;
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Book>> getAllBooks() {
-        return ResponseEntity.ok(bookService.getAllBooks());
-    }
-
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Book>> getBookById(@PathVariable long id) {
-        Optional<Book> book = bookService.getBookById(id);
-        if (book.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        return ResponseEntity.ok(book);
+    public ResponseEntity<BookInfoDto> getBookById(@PathVariable long id) {
+        return ResponseEntity.ok(bookService.getBookById(id));
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<Book> addBook(@RequestBody Book book) {
-        return ResponseEntity.ok(bookService.addBook(book));
+    @PostMapping("/add-book")
+    public ResponseEntity<BookInfoDto> addBook(@RequestBody BookSaveDto book) {
+        return ResponseEntity.ok(bookService.saveBook(book));
     }
 
-    @DeleteMapping("/drop")
-    public ResponseEntity<Void> dropFavoriteBook(@RequestParam long id) {
-        if (bookService.getBookById(id).isPresent()) {
-            bookService.removeBook(id);
-            return ResponseEntity.status(HttpStatus.OK).build();
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
-    @GetMapping("/save")
-    public void saveAllBooks(HttpServletResponse response) {
-        List<Book> books = bookService.getAllBooks();
-        BookToCSVManager.save(books, response);
+    @DeleteMapping("/drop-book/{id}")
+    public Response dropBookById(@PathVariable long id) {
+        bookService.dropBookById(id);
+        return Response.builder()
+                .status(HttpStatus.NO_CONTENT)
+                .message("The book has been deleted.")
+                .build();
     }
 }

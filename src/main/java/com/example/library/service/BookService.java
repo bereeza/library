@@ -1,36 +1,65 @@
 package com.example.library.service;
 
+import com.example.library.dto.book.BookInfoDto;
+import com.example.library.dto.book.BookSaveDto;
 import com.example.library.entity.Book;
+import com.example.library.entity.User;
+import com.example.library.exception.EntityNotFoundException;
+import com.example.library.exception.InvalidEmailException;
 import com.example.library.repository.BookRepository;
-import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class BookService {
     private final BookRepository bookRepository;
+    private final ProfileService profileService;
 
-    public BookService(BookRepository bookRepository) {
-        this.bookRepository = bookRepository;
+    public BookInfoDto getBookById(long id) {
+        Optional<Book> book = bookRepository.findById(id);
+        return book.map(this::buildBookInfo)
+                .orElseThrow(() -> new EntityNotFoundException("Book does not exist."));
     }
 
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public BookInfoDto saveBook(BookSaveDto book) {
+        Book savedBook = bookRepository.save(buildBook(book));
+        return buildBookInfo(savedBook);
     }
 
-    public Optional<Book> getBookById(long id) {
-        return bookRepository.findById(id);
-    }
+    public void dropBookById(long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book does not exist."));
 
-    public Book addBook(@NonNull Book entity) {
-        return bookRepository.save(entity);
-    }
+        String userEmail = profileService.getCurrentUser().getEmail();
+        String authorEmail = book.getUser().getEmail();
 
-    public void removeBook(long id) {
-        if (bookRepository.existsById(id)) {
-            bookRepository.deleteById(id);
+        if (!userEmail.equals(authorEmail)) {
+            throw new InvalidEmailException("You can't drop this book.");
         }
+
+        bookRepository.deleteById(id);
+    }
+
+
+    private Book buildBook(BookSaveDto book) {
+        User currentUser = profileService.convertDtoToUser();
+
+        return Book.builder()
+                .genre(book.getGenre())
+                .name(book.getName())
+                .user(currentUser)
+                .build();
+    }
+
+    private BookInfoDto buildBookInfo(Book book) {
+        return BookInfoDto.builder()
+                .id(book.getId())
+                .name(book.getName())
+                .genre(book.getGenre())
+                .author(book.getUser().getEmail())
+                .build();
     }
 }

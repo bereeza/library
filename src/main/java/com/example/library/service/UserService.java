@@ -1,41 +1,49 @@
 package com.example.library.service;
 
-import com.example.library.configuration.CustomerUserDetails;
-import com.example.library.configuration.UserHolder;
+import com.example.library.dto.user.UserSaveDto;
 import com.example.library.entity.User;
+import com.example.library.entity.enums.Role;
+import com.example.library.exception.UserAlreadyExistException;
+import com.example.library.exception.UserNotFoundException;
+import com.example.library.jwt.JwtProvider;
 import com.example.library.repository.UserRepository;
-import lombok.NonNull;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
-public class UserService implements UserDetailsService {
+@RequiredArgsConstructor
+public class UserService {
     private final UserRepository userRepository;
-    private final UserHolder userHolder;
+    private final JwtProvider jwtProvider;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, UserHolder userHolder) {
-        this.userRepository = userRepository;
-        this.userHolder = userHolder;
-    }
-
-    public User addUser(@NonNull User entity) {
-        return userRepository.save(entity);
-    }
-
-    public Optional<User> findUserByEmail(String email) {
-        return userRepository.findUserByEmail(email);
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Optional<User> user = userRepository.findUserByEmail(email);
-        if (user.isEmpty()) {
-            throw new UsernameNotFoundException("User Not Found");
+    public String saveUserByCredentials(UserSaveDto user) {
+        if (userRepository.findUserByEmail(user.getEmail()).isPresent()) {
+            throw new UserAlreadyExistException("User already exists");
         }
-        return new CustomerUserDetails(user.get());
+
+        userRepository.save(buildUser(user));
+        return jwtProvider.createToken(user.getEmail());
+    }
+
+    public String findUserByCredentials(UserSaveDto user) {
+        User existingUser = userRepository.findUserByEmail(user.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User does not exist."));
+
+        if (passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
+            return jwtProvider.createToken(existingUser.getEmail());
+        }
+
+        throw new BadCredentialsException("Invalid credentials");
+    }
+
+    private User buildUser(UserSaveDto user) {
+        return User.builder()
+                .email(user.getEmail())
+                .password(passwordEncoder.encode(user.getPassword()))
+                .role(Role.USER)
+                .build();
     }
 }
