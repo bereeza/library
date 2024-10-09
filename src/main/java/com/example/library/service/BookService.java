@@ -2,14 +2,21 @@ package com.example.library.service;
 
 import com.example.library.dto.book.BookInfoDto;
 import com.example.library.dto.book.BookSaveDto;
+import com.example.library.dto.pagination.PaginationResponse;
+import com.example.library.dto.user.UserInfoDto;
 import com.example.library.entity.Book;
 import com.example.library.entity.User;
+import com.example.library.exception.AccessDeniedException;
 import com.example.library.exception.EntityNotFoundException;
 import com.example.library.exception.InvalidEmailException;
 import com.example.library.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,6 +36,41 @@ public class BookService {
         return buildBookInfo(savedBook);
     }
 
+    public BookInfoDto updateBookById(long id, BookSaveDto book) {
+        Book existingBook = bookRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found."));
+
+        UserInfoDto currentUser = profileService.getCurrentUser();
+
+        if (!existingBook.getUser().getEmail().equals(currentUser.getEmail())) {
+            throw new AccessDeniedException("You are not the author of this book.");
+        }
+
+        existingBook.setGenre(updateField(existingBook.getGenre(), book.getGenre()));
+        existingBook.setName(updateField(existingBook.getName(), book.getName()));
+
+        Book updatedBook = bookRepository.save(existingBook);
+        return buildBookInfo(updatedBook);
+    }
+
+    private <T> T updateField(T currentValue, T newValue) {
+        return newValue != null ? newValue : currentValue;
+    }
+
+    public PaginationResponse<BookInfoDto> getBooks(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Book> books = bookRepository.findAll(pageable);
+        List<BookInfoDto> data = books.getContent().stream()
+                .map(this::buildBookInfo)
+                .toList();
+
+        return PaginationResponse.<BookInfoDto>builder()
+                .page(books.getNumber())
+                .size(books.getSize())
+                .items(data)
+                .build();
+    }
+
     public void dropBookById(long id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Book does not exist."));
@@ -42,7 +84,6 @@ public class BookService {
 
         bookRepository.deleteById(id);
     }
-
 
     private Book buildBook(BookSaveDto book) {
         User currentUser = profileService.convertDtoToUser();

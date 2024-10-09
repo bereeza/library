@@ -3,8 +3,8 @@ package com.example.library.service;
 import com.example.library.dto.user.UserSaveDto;
 import com.example.library.entity.User;
 import com.example.library.entity.enums.Role;
+import com.example.library.exception.EntityNotFoundException;
 import com.example.library.exception.UserAlreadyExistException;
-import com.example.library.exception.UserNotFoundException;
 import com.example.library.jwt.JwtProvider;
 import com.example.library.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class UserService {
 
     public String findUserByCredentials(UserSaveDto user) {
         User existingUser = userRepository.findUserByEmail(user.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User does not exist."));
+                .orElseThrow(() -> new EntityNotFoundException("User does not exist."));
 
         if (passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
             return jwtProvider.createToken(existingUser.getEmail());

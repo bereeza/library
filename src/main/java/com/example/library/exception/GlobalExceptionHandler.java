@@ -23,7 +23,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({EntityNotFoundException.class})
-    public ResponseEntity<ErrorResponse> handleNotFoundException(EntityNotFoundException e) {
+    public ResponseEntity<ErrorResponse> handleRoleChangeNotAllowedException(EntityNotFoundException e) {
         ErrorResponse response = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .code(HttpStatus.NOT_FOUND.value())
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({InvalidEmailException.class})
-    public ResponseEntity<ErrorResponse> handleNotFoundException(InvalidEmailException e) {
+    public ResponseEntity<ErrorResponse> handleRoleChangeNotAllowedException(InvalidEmailException e) {
         ErrorResponse response = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .code(HttpStatus.BAD_REQUEST.value())
@@ -42,5 +42,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({RoleChangeNotAllowedException.class})
+    public ResponseEntity<ErrorResponse> handleRoleChangeNotAllowedException(RoleChangeNotAllowedException e) {
+        return getForbiddenErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler({AccessDeniedException.class})
+    public ResponseEntity<ErrorResponse> handleRoleChangeNotAllowedException(AccessDeniedException e) {
+        return getForbiddenErrorResponse(e.getMessage());
+    }
+
+    private static ResponseEntity<ErrorResponse> getForbiddenErrorResponse(String e) {
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .code(HttpStatus.FORBIDDEN.value())
+                .message(e)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 }

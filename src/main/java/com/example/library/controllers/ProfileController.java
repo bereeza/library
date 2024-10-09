@@ -17,4 +17,9 @@ public class ProfileController {
     public ResponseEntity<UserInfoDto> getCurrentUser() {
         return ResponseEntity.ok(profileService.getCurrentUser());
     }
+
+    @PatchMapping("/set-role")
+    public ResponseEntity<UserInfoDto> setAdmin(@RequestParam("email") String email) {
+        return ResponseEntity.ok(profileService.setAdminRole(email));
+    }
 }
