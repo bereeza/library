@@ -53,10 +53,6 @@ public class BookService {
         return buildBookInfo(updatedBook);
     }
 
-    private <T> T updateField(T currentValue, T newValue) {
-        return newValue != null ? newValue : currentValue;
-    }
-
     public PaginationResponse<BookInfoDto> getBooks(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Book> books = bookRepository.findAll(pageable);
@@ -83,6 +79,10 @@ public class BookService {
         }
 
         bookRepository.deleteById(id);
+    }
+
+    private <T> T updateField(T currentValue, T newValue) {
+        return newValue != null ? newValue : currentValue;
     }
 
     private Book buildBook(BookSaveDto book) {
